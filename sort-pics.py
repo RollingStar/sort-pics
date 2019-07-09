@@ -1,20 +1,26 @@
+import argparse
 import os
-from PIL import Image
+from collections import Counter
 from shutil import move
+from PIL import Image
 
+#if no dir is specified on the command line
+DEFAULT_DIR = r'C:\\PATH_HERE'
 WIDE_STR = 'wide'
 TALL_STR = 'tall'
 SQUARE_STR = 'square'
-PIC_DIR = r'C:\PATH_HERE'
 
 def sort_images(folder):
     folder = os.fsencode(folder)
+    counts = []
     for leaf in os.scandir(folder):
         if leaf.is_file():
             aspect = get_aspect(leaf.path)
+            counts.append(aspect)
             new_path = os.path.join(os.fsdecode(folder), aspect, os.fsdecode(leaf.name))
             print(new_path)
             move(leaf.path, new_path)
+    print(Counter(counts))
 
 def get_aspect(file):
     im = Image.open(file)
@@ -24,22 +30,22 @@ def get_aspect(file):
     elif width < height:
         return TALL_STR
     elif width == height:
-        return 'square'
+        return SQUARE_STR
     else:
         return 'error'
 
 def make_folders(parent_dir):
-    #not making three if/else statements for this
-    try:
-        os.mkdir(os.path.join(parent_dir, WIDE_STR))
-        os.mkdir(os.path.join(parent_dir, TALL_STR))
-        os.mkdir(os.path.join(parent_dir, SQUARE_STR))
-    except:
-        pass
+    strings = [WIDE_STR, TALL_STR, SQUARE_STR]
+    for string in strings:
+        os.makedirs(os.path.join(parent_dir, string), exist_ok=True)
 
-def main():
-    make_folders(PIC_DIR)
-    sort_images(PIC_DIR)
 
 if __name__ == "__main__":
-    main()
+    help_str = 'read the path.'
+    parser = argparse.ArgumentParser(description=help_str)
+    parser.add_argument('path', help=help_str, default = DEFAULT_DIR)
+    args = parser.parse_args()
+    pic_dir = args.path
+    make_folders(pic_dir)
+    sort_images(pic_dir)
+    
